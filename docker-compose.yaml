@@ -1,0 +1,27 @@
+---
+version: '3'
+
+services:
+  db:
+    image: postgres:alpine
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: changeme
+      POSTGRES_DB: url
+  app:
+    depends_on:
+      - db
+    image: jfreeman/url-backend:0.1
+    ports:
+      - 8080:8080
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: app
+      DB_PASSWORD: changeme
+      DB_NAME: url
+      SERVER_HOST: 0.0.0.0
+      JWT_PRIVATE_KEY: "exampleThisIsnt4321A_.Key"
+      TOKEN_TTL: 1800
