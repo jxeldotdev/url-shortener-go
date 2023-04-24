@@ -40,7 +40,10 @@ func serveApplication() {
 	protectedRoutes.Use(middleware.JWTAuthMiddleware())
 	protectedRoutes.POST("/url", controllers.AddUrl)
 	protectedRoutes.GET("/url", controllers.GetAllUrls)
+	protectedRoutes.GET("/url/:id", controllers.GetSingleUrl)
+	protectedRoutes.DELETE("/url/:id", controllers.DeleteUrl)
 	protectedRoutes.GET("/user", controllers.GetAllUsers)
+
 	router.GET("/r/:shortUrl", controllers.RedirectToLongUrl)
 	AppLogger.Println("Initializing Server")
 	router.Run(":8080")

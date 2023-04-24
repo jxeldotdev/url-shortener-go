@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jxeldotdev/url-backend/helper"
@@ -44,7 +45,74 @@ func AddUrl(context *gin.Context) {
 	context.JSON(http.StatusCreated, gin.H{"data": savedUrl})
 }
 
+func UpdateUrl(context *gin.Context) {
+	// PUT /api/v1/url/id
+	var url models.Url
+	urlId := context.Param("id")
+	urlIdAsInt, strconvErr := strconv.ParseUint(urlId, 10, 64)
+	if strconvErr != nil {
+		context.JSON(http.StatusInternalServerError, gin.H{"error": strconvErr.Error()})
+	}
+	context.BindJSON(&url)
+	// need to update the url object with the req body
+	url.Id = urlIdAsInt
+	err := url.UpdateUrl()
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			context.Status(http.StatusNotFound)
+			return
+
+		}
+		context.JSON(http.StatusInternalServerError, err.Error())
+		return
+	}
+	context.JSON(http.StatusOK, &url)
+}
+
+func DeleteUrl(context *gin.Context) {
+	// DELETE /api/v1/url/id
+	var url models.Url
+	urlId := context.Param("id")
+	urlIdAsInt, strconvErr := strconv.ParseUint(urlId, 10, 64)
+	if strconvErr != nil {
+		context.JSON(http.StatusInternalServerError, gin.H{"error": strconvErr.Error()})
+	}
+	err := url.DeleteUrl(urlIdAsInt)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			context.Status(http.StatusNotFound)
+			return
+		}
+		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	context.Status(http.StatusNoContent)
+	return
+}
+
+func GetSingleUrl(context *gin.Context) {
+	// GET /api/v1/url/id
+	var url models.Url
+	urlId := context.Param("id")
+	urlIdAsInt, strconvErr := strconv.ParseUint(urlId, 10, 64)
+	if strconvErr != nil {
+		context.JSON(http.StatusInternalServerError, gin.H{"error": strconvErr.Error()})
+	}
+	url, err := url.FindById(urlIdAsInt)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			context.Status(http.StatusNotFound)
+			return
+		}
+		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	context.JSON(http.StatusOK, gin.H{"data": url})
+}
+
 func GetAllUrls(context *gin.Context) {
+	// GET /api/v1/url
 	var url models.Url
 	urls, err := url.GetAll()
 	if err != nil {
@@ -61,6 +129,7 @@ func GetAllUrls(context *gin.Context) {
 }
 
 func RedirectToLongUrl(context *gin.Context) {
+	// GET /r/shortUrlId
 	shortUrlId := context.Param("shortUrl")
 	fmt.Printf("Short URL: %s", shortUrlId)
 	url, err := models.FindUrlByShortUrl(shortUrlId)
