@@ -17,8 +17,14 @@ var privateKey = []byte(os.Getenv("JWT_PRIVATE_KEY"))
 
 func GenerateJWT(user models.User) (string, error) {
 	tokenTTL, _ := strconv.Atoi(os.Getenv("TOKEN_TTL"))
+	userInDb, err := models.FindUserById(user.Id)
+	if userInDb.Username == "" {
+		return "", errors.New("Invalid user ID provided")
+	} else if err != nil {
+		return "", errors.New("Internal error occured, unable to generate JWT")
+	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"id":  user.ID,
+		"id":  user.Id,
 		"iat": time.Now().Unix(),
 		"eat": time.Now().Add(time.Second * time.Duration(tokenTTL)).Unix(),
 	})
@@ -31,11 +37,16 @@ func ValidateJWT(context *gin.Context) error {
 		return err
 	}
 
-	_, ok := token.Claims.(jwt.MapClaims)
-	if ok && token.Valid {
+	claims := token.Claims.(jwt.MapClaims)
+	userId := uint(claims["id"].(float64))
+
+	_, err = models.FindUserById(userId)
+
+	if err != nil {
+		return errors.New("Invalid token provided")
+	} else if token.Valid {
 		return nil
 	}
-
 	return errors.New("Invalid token provided")
 }
 

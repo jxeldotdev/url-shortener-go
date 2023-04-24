@@ -20,6 +20,15 @@ func Register(context *gin.Context) {
 		Password: input.Password,
 	}
 
+	// check if user already exists
+	userExists, err := models.FindUserByUsername(input.Username)
+
+	if userExists.Username != "" {
+
+		context.JSON(http.StatusBadRequest, gin.H{"error": "Username already exists"})
+		return
+	}
+
 	savedUser, err := user.Save()
 
 	if err != nil {
@@ -53,4 +62,16 @@ func Login(context *gin.Context) {
 	}
 
 	context.JSON(http.StatusOK, gin.H{"jwt": jwt})
+}
+
+func GetAllUsers(context *gin.Context) {
+	var user models.User
+
+	users, err := user.GetAllUsers()
+
+	if err != nil {
+		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	context.JSON(http.StatusOK, gin.H{"data": users})
 }

@@ -10,11 +10,11 @@ import (
 )
 
 type User struct {
-	ID       uint   `gorm:"primaryKey"`
+	Id       uint   `gorm:"primaryKey" json:"id"`
 	Username string `gorm:"size:255;not null;unique" json:"username"`
 	Password string `gorm:"size:255;not null" json:"-"`
-	Urls     []Url
-	IsAdmin  bool
+	Urls     []Url  `gorm:"foreignKey:UserId" json:"urls"`
+	IsAdmin  bool   `json:"is_admin"`
 }
 
 func (user *User) Save() (*User, error) {
@@ -51,9 +51,25 @@ func FindUserByUsername(username string) (User, error) {
 
 func FindUserById(id uint) (User, error) {
 	var user User
-	err := db.Database.Preload("Urls").Where("ID=?", id).Find(&user).Error
+	err := db.Database.Preload("Urls").Where("Id=?", id).Find(&user).Error
 	if err != nil {
 		return User{}, err
 	}
 	return user, nil
 }
+
+func (user *User) GetAllUsers() ([]User, error) {
+	var users []User
+	err := db.Database.Limit(100).Find(&users).Error
+	if err != nil {
+		return nil, err
+	}
+	return users, nil
+}
+
+/*
+func GetAllUsers() (User, error) {
+	err := db.Database.Find
+	return
+}
+*/

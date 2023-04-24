@@ -4,26 +4,15 @@ import (
 	"time"
 
 	"github.com/jxeldotdev/url-backend/internal/db"
-	"gorm.io/gorm"
 )
 
-/*type User struct {
-	ID       uint   `gorm:"primaryKey"`
-	Name     string `gorm:"size:255;not null;unique" json:"name"`
-	Password string `gorm:"size:255;not null" json:"-"`
-	Urls     []Url  `gorm:"foreignKey:UserId"`
-	IsAdmin  bool
-}
-*/
-
 type Url struct {
-	gorm.Model
-	Id        uint
-	LongUrl   string    `gorm:"size:255;not null" json:"long_url"`
-	ShortUrl  string    `gorm:"size:10;not null;unique" json:"short_url"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-	UserId    uint
+	Id        uint      `gorm:"primaryKey" json:"id"`
+	LongUrl   string    `gorm:"not null" binding:"required" json:"long_url"`
+	ShortUrl  string    `gorm:"unique" json:"short_url"`
+	CreatedAt time.Time `gorm:"autoCreateTime" json:"created_at"`
+	UpdatedAt time.Time `gorm:"autoUpdateTime" json:"updated_at"`
+	UserId    uint      `json:"user_id"`
 }
 
 func (url *Url) Save() (*Url, error) {
@@ -32,4 +21,22 @@ func (url *Url) Save() (*Url, error) {
 		return &Url{}, err
 	}
 	return url, nil
+}
+
+func FindUrlByShortUrl(shortUrl string) (Url, error) {
+	var urlInDb Url
+	err := db.Database.Limit(1).Where("short_url=?", shortUrl).Find(&urlInDb).Error
+	if err != nil {
+		return Url{}, err
+	}
+	return urlInDb, nil
+}
+
+func (url *Url) GetAll() ([]Url, error) {
+	var urls []Url
+	err := db.Database.Limit(100).Find(&urls).Error
+	if err != nil {
+		return urls, err
+	}
+	return urls, nil
 }

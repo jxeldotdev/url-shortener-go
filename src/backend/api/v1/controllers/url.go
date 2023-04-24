@@ -1,6 +1,8 @@
 package controllers
 
 import (
+	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -22,26 +24,36 @@ func AddUrl(context *gin.Context) {
 		return
 	}
 
-	input.UserId = user.ID
+	correctInput := models.Url{
+		LongUrl:  input.LongUrl,
+		ShortUrl: helper.GenUniqueShortUrl(),
+		UserId:   user.Id,
+	}
 
-	savedUrl, err := input.Save()
+	ci, _ := json.Marshal(correctInput)
+	fmt.Printf("Input: %s", ci)
+	savedUrl, err := correctInput.Save()
 
 	if err != nil {
 		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-
+	fmt.Printf("Saved URL: %%v: %s", string(ci))
 	context.JSON(http.StatusCreated, gin.H{"data": savedUrl})
-
 }
 
 func GetAllUrls(context *gin.Context) {
-	user, err := helper.CurrentUser(context)
-
+	var url models.Url
+	urls, err := url.GetAll()
 	if err != nil {
 		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	context.JSON(http.StatusOK, gin.H{"data": user.Urls})
+	// return an empty array instead of null if there's nothing
+	if urls == nil {
+		urls = []models.Url{}
+	}
+
+	context.JSON(http.StatusOK, gin.H{"data": urls})
 }
