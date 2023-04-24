@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/jxeldotdev/url-backend/internal/db"
@@ -25,10 +26,11 @@ func (url *Url) Save() (*Url, error) {
 
 func FindUrlByShortUrl(shortUrl string) (Url, error) {
 	var urlInDb Url
-	err := db.Database.Limit(1).Where("short_url=?", shortUrl).Find(&urlInDb).Error
+	err := db.Database.Where("short_url = ?", shortUrl).First(&urlInDb).Error
 	if err != nil {
 		return Url{}, err
 	}
+	fmt.Printf("FindUrlByShortUrl: +%v", urlInDb)
 	return urlInDb, nil
 }
 

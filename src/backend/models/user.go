@@ -66,10 +66,3 @@ func (user *User) GetAllUsers() ([]User, error) {
 	}
 	return users, nil
 }
-
-/*
-func GetAllUsers() (User, error) {
-	err := db.Database.Find
-	return
-}
-*/

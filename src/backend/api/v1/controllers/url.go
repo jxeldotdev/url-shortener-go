@@ -57,3 +57,16 @@ func GetAllUrls(context *gin.Context) {
 
 	context.JSON(http.StatusOK, gin.H{"data": urls})
 }
+
+func RedirectToLongUrl(context *gin.Context) {
+	shortUrlId := context.Param("shortUrl")
+	fmt.Printf("Short URL: %s", shortUrlId)
+	url, err := models.FindUrlByShortUrl(shortUrlId)
+
+	if err != nil {
+		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	fmt.Printf("Redirecting TO: %s", url.LongUrl)
+	context.Redirect(http.StatusFound, url.LongUrl)
+}
