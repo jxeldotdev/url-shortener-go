@@ -37,9 +37,9 @@ func ValidateJWT(context *gin.Context) error {
 		return err
 	}
 
+	// validate that the user exists
 	claims := token.Claims.(jwt.MapClaims)
 	userId := uint(claims["id"].(float64))
-
 	_, err = models.FindUserById(userId)
 
 	if err != nil {

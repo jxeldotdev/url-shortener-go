@@ -2,12 +2,14 @@ package controllers
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jxeldotdev/url-backend/helper"
 	"github.com/jxeldotdev/url-backend/models"
+	"gorm.io/gorm"
 )
 
 func AddUrl(context *gin.Context) {
@@ -64,6 +66,10 @@ func RedirectToLongUrl(context *gin.Context) {
 	url, err := models.FindUrlByShortUrl(shortUrlId)
 
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			context.Status(http.StatusNotFound)
+			return
+		}
 		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}

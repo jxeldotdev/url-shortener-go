@@ -32,16 +32,15 @@ func main() {
 
 func serveApplication() {
 	router := gin.Default()
-
 	publicRoutes := router.Group("/auth")
 	publicRoutes.POST("/register", controllers.Register)
 	publicRoutes.POST("/login", controllers.Login)
+
 	protectedRoutes := router.Group("/api/v1")
 	protectedRoutes.Use(middleware.JWTAuthMiddleware())
 	protectedRoutes.POST("/url", controllers.AddUrl)
 	protectedRoutes.GET("/url", controllers.GetAllUrls)
 	protectedRoutes.GET("/user", controllers.GetAllUsers)
-
 	router.GET("/r/:shortUrl", controllers.RedirectToLongUrl)
 	AppLogger.Println("Initializing Server")
 	router.Run(":8080")
