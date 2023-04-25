@@ -1,12 +1,8 @@
 package models
 
 import (
-	"html"
-	"strings"
-
 	"github.com/jxeldotdev/url-backend/internal/db"
 	"golang.org/x/crypto/bcrypt"
-	"gorm.io/gorm"
 )
 
 type User struct {
@@ -18,27 +14,23 @@ type User struct {
 }
 
 func (user *User) Save() (*User, error) {
-	user.BeforeSave(db.Database)
-	err := db.Database.Create(&user).Error
+	pw, err := HashPassword(user.Password)
+	user.Password = pw
+	err = db.Database.Create(&user).Error
 	if err != nil {
 		return &User{}, err
 	}
 	return user, nil
 }
 
-func (user *User) BeforeSave(*gorm.DB) error {
-	passwordHash, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+func HashPassword(password string) (string, error) {
+	passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
-		return err
+		return "", err
 	}
-	user.Password = string(passwordHash)
-	user.Username = html.EscapeString(strings.TrimSpace(user.Username))
-	return nil
+	return string(passwordHash), nil
 }
 
-func (user *User) ValidatePassword(password string) error {
-	return bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
-}
 func (user *User) GetAllUsers() ([]User, error) {
 	var users []User
 	err := db.Database.Limit(100).Find(&users).Error
@@ -54,6 +46,23 @@ func (user *User) Update() error {
 	}
 	db.Database.Save(&user)
 	return nil
+}
+
+func UserLoginCheck(username string, password string) (bool, error) {
+	user := User{}
+
+	err := db.Database.Model(User{}).Where("username = ?", username).Take(&user).Error
+
+	if err != nil {
+		return false, err
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+
+	if err != nil && err == bcrypt.ErrMismatchedHashAndPassword {
+		return false, err
+	}
+	return true, nil
 }
 
 func FindUserByUsername(username string) (User, error) {

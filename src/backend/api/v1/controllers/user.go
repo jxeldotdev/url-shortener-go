@@ -1,11 +1,14 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jxeldotdev/url-backend/helper"
 	"github.com/jxeldotdev/url-backend/models"
+	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 )
 
 func Register(context *gin.Context) {
@@ -36,7 +39,7 @@ func Register(context *gin.Context) {
 		return
 	}
 
-	context.JSON(http.StatusCreated, gin.H{"user": savedUser})
+	context.JSON(http.StatusOK, gin.H{"user": savedUser})
 }
 
 func Login(context *gin.Context) {
@@ -47,10 +50,26 @@ func Login(context *gin.Context) {
 		return
 	}
 
+	context.BindJSON(&input)
+
+	// does user exist
 	user, err := models.FindUserByUsername(input.Username)
 
 	if err != nil {
-		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		if err != gorm.ErrRecordNotFound {
+			context.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid username or password"})
+			return
+		} else {
+			context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+	}
+
+	fmt.Printf("%+v", &input)
+	loginValid, err := models.UserLoginCheck(input.Username, input.Password)
+
+	if loginValid != true && err == bcrypt.ErrMismatchedHashAndPassword {
+		context.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid username or password"})
 		return
 	}
 
