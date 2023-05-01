@@ -27,6 +27,10 @@ func main() {
 	AppLogger.Println("Running migrations")
 	db.Database.AutoMigrate(&models.User{})
 	db.Database.AutoMigrate(&models.Url{})
+
+	//db.Database.AutoMigrate(&models.ApiPermission{})
+	//db.Database.AutoMigrate(&models.Role{})
+	//models.CreateRoles()
 	serveApplication()
 }
 
@@ -43,6 +47,7 @@ func serveApplication() {
 	protectedRoutes.GET("/url/:id", controllers.GetSingleUrl)
 	protectedRoutes.DELETE("/url/:id", controllers.DeleteUrl)
 	protectedRoutes.GET("/user", controllers.GetAllUsers)
+	protectedRoutes.GET("/user/:id/urls")
 
 	router.GET("/r/:shortUrl", controllers.RedirectToLongUrl)
 	AppLogger.Println("Initializing Server")

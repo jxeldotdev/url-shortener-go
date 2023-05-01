@@ -11,6 +11,7 @@ type User struct {
 	Password string `gorm:"size:255;not null" json:"-"`
 	Urls     []Url  `gorm:"foreignKey:UserId" json:"urls"`
 	IsAdmin  bool   `json:"is_admin"`
+	RoleId   Role   `gorm:"foreignKey:Id"`
 }
 
 func (user *User) Save() (*User, error) {
